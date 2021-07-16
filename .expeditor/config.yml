@@ -20,7 +20,8 @@ rubygems:
 pipelines:
   - verify:
       public: true
-  - docker/build:
+  - docker/build
+  - test_docker/build:
       definition: .expeditor/docker-build.pipeline.yml
   - habitat/build
   - habitat/test:
