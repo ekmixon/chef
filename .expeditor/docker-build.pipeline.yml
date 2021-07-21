@@ -1,7 +1,6 @@
 ---
 steps:
-- id: chef-amd64
-  label: ":docker: build chef amd64"
+- label: ":docker: build chef amd64"
   agents:
     queue: docker-linux
   command:
@@ -10,8 +9,7 @@ steps:
     - docker manifest create chef/chef:$$VERSION --amend chef/chef:amd64
     - docker manifest push chef/chef:$$VERSION
 
-- id: chef-arm64
-  label: ":docker: build chef arm64"
+- label: ":docker: build chef arm64"
   agents:
     queue: docker-linux-arm64
   command:
