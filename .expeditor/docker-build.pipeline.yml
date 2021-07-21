@@ -13,7 +13,7 @@ steps:
 - id: chef-arm64
   label: ":docker: build chef arm64"
   agents:
-    queue: docker-linux
+    queue: docker-linux-arm64
   command:
     - docker build --build-arg CHANNEL=$$EXPEDITOR_CHANNEL --build-arg VERSION=$$VERSION -t chef/chef:arm64 .
     - docker push chef/chef:arm64
