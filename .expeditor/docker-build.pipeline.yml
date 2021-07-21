@@ -1,23 +1,21 @@
 ---
-env:
-  IMAGE_REGISTRY: chef
-  BUILDKITE_PLUGIN_DOBI_S3_BUCKET_NAME: docker-buildkite-cache-chef-prod
 steps:
-- id: chef
-  label: ":docker: build chef"
+- id: chef-amd64
+  label: ":docker: build chef amd64"
   agents:
     queue: docker-linux
-  plugins:
-  - chef/dobi#v0.1.1:
-      tasks:
-      - chef:build
-      - chef:tag
+  command:
+    - docker build --build-arg CHANNEL=$$EXPEDITOR_CHANNEL --build-arg VERSION=$$VERSION -t chef/chef:amd64 .
+    - docker push chef/chef:amd64
+    - docker manifest create chef/chef:$$VERSION --amend chef/chef:amd64
+    - docker manifest push chef/chef:$$VERSION
+
 - id: chef-arm64
   label: ":docker: build chef arm64"
   agents:
-    queue: docker-linux-arm64
-  plugins:
-  - chef/dobi#v0.1.1:
-      tasks:
-      - chef:build
-      - chef:tag
+    queue: docker-linux
+  command:
+    - docker build --build-arg CHANNEL=$$EXPEDITOR_CHANNEL --build-arg VERSION=$$VERSION -t chef/chef:arm64 .
+    - docker push chef/chef:arm64
+    - docker manifest create chef/chef:$$VERSION --amend chef/chef:arm64
+    - docker manifest push chef/chef:$$VERSION
