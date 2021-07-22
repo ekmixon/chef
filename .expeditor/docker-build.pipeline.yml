@@ -1,19 +1,21 @@
 ---
+env:
+  DOCKER_CLI_EXPERIMENTAL: enabled
 steps:
 - label: ":docker: build chef amd64"
   agents:
     queue: docker-linux
   command:
-    - docker build --build-arg CHANNEL=$$EXPEDITOR_CHANNEL --build-arg VERSION=$$VERSION -t chef/chef:amd64 .
-    - docker push chef/chef:amd64
-    - docker manifest create chef/chef:$$VERSION --amend chef/chef:amd64
-    - docker manifest push chef/chef:$$VERSION
+    - docker build --build-arg CHANNEL=$$EXPEDITOR_CHANNEL --build-arg VERSION=$$EXPEDITOR_VERSION -t chef/chef:$$EXPEDITOR_VERSION-amd64 .
+    - docker push chef/chef:$$EXPEDITOR_VERSION-amd64
+    - docker manifest create chef/chef:$$EXPEDITOR_CHANNEL --amend chef/chef:$$EXPEDITOR_VERSION-amd64
+    - docker manifest push chef/chef:$$EXPEDITOR_VERSION
 
 - label: ":docker: build chef arm64"
   agents:
     queue: docker-linux-arm64
   command:
-    - docker build --build-arg CHANNEL=$$EXPEDITOR_CHANNEL --build-arg VERSION=$$VERSION -t chef/chef:arm64 .
-    - docker push chef/chef:arm64
-    - docker manifest create chef/chef:$$VERSION --amend chef/chef:arm64
-    - docker manifest push chef/chef:$$VERSION
+    - docker build --build-arg CHANNEL=$$EXPEDITOR_CHANNEL --build-arg VERSION=$$EXPEDITOR_VERSION -t chef/chef:$$EXPEDITOR_VERSION-arm64 .
+    - docker push chef/chef:$$EXPEDITOR_VERSION-arm64
+    - docker manifest create chef/chef:$$EXPEDITOR_CHANNEL --amend chef/chef:$$EXPEDITOR_VERSION-arm64
+    - docker manifest push chef/chef:$$EXPEDITOR_VERSION

@@ -21,8 +21,6 @@ pipelines:
   - verify:
       public: true
   - docker/build
-  - test_docker/build:
-      definition: .expeditor/docker-build.pipeline.yml
   - habitat/build
   - habitat/test:
       definition: .expeditor/habitat-test.pipeline.yml
