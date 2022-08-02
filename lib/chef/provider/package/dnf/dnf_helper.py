@@ -53,12 +53,10 @@ def flushcache():
     get_sack().load_system_repo(build_cache=True)
 
 def version_tuple(versionstr):
-    e = '0'
     v = None
     r = None
     colon_index = versionstr.find(':')
-    if colon_index > 0:
-        e = str(versionstr[:colon_index])
+    e = str(versionstr[:colon_index]) if colon_index > 0 else '0'
     dash_index = versionstr.find('-')
     if dash_index > 0:
         tmp = versionstr[colon_index + 1:dash_index]
@@ -79,11 +77,11 @@ def versioncompare(versions):
     sack = get_sack()
     if (versions[0] is None) or (versions[1] is None):
         outpipe.write('0\n')
-        outpipe.flush()
     else:
         evr_comparison = dnf.rpm.rpm.labelCompare(version_tuple(versions[0]), version_tuple(versions[1]))
-        outpipe.write('{}\n'.format(evr_comparison))
-        outpipe.flush()
+        outpipe.write(f'{evr_comparison}\n')
+
+    outpipe.flush()
 
 def query(command):
     sack = get_sack()
@@ -97,12 +95,8 @@ def query(command):
     if command['action'] == "whatavailable":
         q = q.available()
 
-    if 'epoch' in command:
-        # We assume that any glob is "*" so just omit the filter since the dnf libraries have no
-        # epoch__glob filter.  That means "?" wildcards in epochs will fail.  The workaround is to
-        # not use the version filter here but to put the version with all the globs in the package name.
-        if not dnf.util.is_glob_pattern(command['epoch']):
-            q = q.filterm(epoch=int(command['epoch']))
+    if 'epoch' in command and not dnf.util.is_glob_pattern(command['epoch']):
+        q = q.filterm(epoch=int(command['epoch']))
     if 'version' in command:
         if dnf.util.is_glob_pattern(command['version']):
             q = q.filterm(version__glob=command['version'])
@@ -125,17 +119,17 @@ def query(command):
     if len(archq.run()) > 0:
         q = archq
 
-    pkgs = q.latest(1).run()
-
-    if not pkgs:
-        outpipe.write('{} nil nil\n'.format(command['provides'].split().pop(0)))
-        outpipe.flush()
-    else:
+    if pkgs := q.latest(1).run():
         # make sure we picked the package with the highest version
         pkgs.sort
         pkg = pkgs.pop()
-        outpipe.write('{} {}:{}-{} {}\n'.format(pkg.name, pkg.epoch, pkg.version, pkg.release, pkg.arch))
-        outpipe.flush()
+        outpipe.write(
+            f'{pkg.name} {pkg.epoch}:{pkg.version}-{pkg.release} {pkg.arch}\n'
+        )
+
+    else:
+        outpipe.write(f"{command['provides'].split().pop(0)} nil nil\n")
+    outpipe.flush()
 
 # the design of this helper is that it should try to be 'brittle' and fail hard and exit in order
 # to keep process tables clean.  additional error handling should probably be added to the retry loop
@@ -178,9 +172,7 @@ try:
         except ValueError:
             raise RuntimeError("bad json parse")
 
-        if command['action'] == "whatinstalled":
-            query(command)
-        elif command['action'] == "whatavailable":
+        if command['action'] in ["whatinstalled", "whatavailable"]:
             query(command)
         elif command['action'] == "versioncompare":
             versioncompare(command['versions'])

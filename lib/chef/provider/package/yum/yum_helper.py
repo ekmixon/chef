@@ -32,7 +32,7 @@ def versioncompare(versions):
     # then we'll chop the arch component (assuming it *is* a valid one) from the first version string
     # so we're only comparing the evr portions.
     if (candidate_arch2 not in arch_list) and (candidate_arch1 in arch_list):
-        final_version1 = versions[0].replace("." + candidate_arch1,"")
+        final_version1 = versions[0].replace(f".{candidate_arch1}", "")
     else:
         final_version1 = versions[0]
 
@@ -83,11 +83,7 @@ def query(base, command):
         desired_arch = getBaseArch()
 
     obj = None
-    if command['action'] == "whatinstalled":
-        obj = base.rpmdb
-    else:
-        obj = base.pkgSack
-
+    obj = base.rpmdb if command['action'] == "whatinstalled" else base.pkgSack
     # if we are given "name == 1.2.3" then we must use the getProvides() API.
     #   - this means that we ignore arch and version properties when given prco tuples as a package_name
     #   - in order to fix this, something would have to happen where getProvides was called first and
@@ -115,23 +111,25 @@ def query(base, command):
 
     if not pkgs:
         outpipe.write(command['provides'].split().pop(0)+' nil nil\n')
-        outpipe.flush()
     else:
         # make sure we picked the package with the highest version
         pkgs = base.bestPackagesFromList(pkgs,single_name=True)
         pkg = pkgs.pop(0)
         outpipe.write("%(n)s %(e)s:%(v)s-%(r)s %(a)s\n" % { 'n': pkg.name, 'e': pkg.epoch, 'v': pkg.version, 'r': pkg.release, 'a': pkg.arch })
-        outpipe.flush()
-
+    outpipe.flush()
     # Reset any repos we were passed in enablerepo/disablerepo to the original state in enabled_repos
     if 'repos' in command:
         for repo in command['repos']:
-            if 'enable' in repo:
-                if base.repos.getRepo(repo['enable']) not in enabled_repos:
-                    base.repos.disableRepo(repo['enable'])
-        if 'disable' in repo:
-            if base.repos.getRepo(repo['disable']) in enabled_repos:
-                base.repos.enableRepo(repo['disable'])
+            if (
+                'enable' in repo
+                and base.repos.getRepo(repo['enable']) not in enabled_repos
+            ):
+                base.repos.disableRepo(repo['enable'])
+        if (
+            'disable' in repo
+            and base.repos.getRepo(repo['disable']) in enabled_repos
+        ):
+            base.repos.enableRepo(repo['disable'])
 
 # the design of this helper is that it should try to be 'brittle' and fail hard and exit in order
 # to keep process tables clean.  additional error handling should probably be added to the retry loop
